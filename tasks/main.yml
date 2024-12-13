@@ -37,12 +37,18 @@
     cacheable: yes
 
 - name: OpenShift DEBUG DATA
-  when: cloud_provider == 'gcp'
+  when:
+    - cloud_provider == 'gcp'
+    - groups['bastions'] | length > 0  # Ensure bastions group exists and is not empty
   vars:
     _bastion_inventory_name: "{{ groups['bastions'][0] }}"
   debug:
-    msg: "oc login --insecure-skip-tls-verify=true -u {{ ocp4_workload_authentication_htpasswd_user_base }}{{ item }} -p {{ _ocp4_workload_authentication_htpasswd_user_passwords[item] }} {{ openshift_api_url }}"
-  loop: "{{ range(1, num_users + 1) | list }}"
+    msg: >-
+      oc login --insecure-skip-tls-verify=true -u 
+      {{ ocp4_workload_authentication_htpasswd_user_base }}{{ item }} 
+      -p {{ _ocp4_workload_authentication_htpasswd_user_passwords[item | int] }} 
+      {{ openshift_api_url }}
+  loop: "{{ range(1, num_users | int + 1) | list }}"
 
 - name: OpenShift Access Data
   when: cloud_provider == 'openshift_cnv'
